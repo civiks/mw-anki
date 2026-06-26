@@ -1,0 +1,9 @@
+.env
+# personal saved-word data — regenerated per-user via `make`
+words.json
+words.full.json
+mw_words.apkg
+viz.html
+embeddings.npy
+__pycache__/
+.DS_Store

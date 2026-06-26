@@ -1,0 +1,13 @@
+[project]
+name = "mw-anki"
+version = "0.1.0"
+description = "Export Merriam-Webster saved words into a semantic bubble map and an enriched Anki deck."
+requires-python = ">=3.13"
+dependencies = [
+    "curl-cffi>=0.15.0",
+    "genanki>=0.13.1",
+    "numpy>=2.5.0",
+    "python-dotenv>=1.2.2",
+    "scikit-learn>=1.9.0",
+    "sentence-transformers>=5.6.0",
+]
