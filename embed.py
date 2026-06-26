@@ -52,8 +52,8 @@ print("Clustering...")
 km = KMeans(n_clusters=N_CLUSTERS, random_state=42, n_init="auto").fit(embeddings)
 labels = km.labels_
 
-# muted, distinct palette that works on dark bg
-COLORS = ["#e07b6a", "#e0a96a", "#c9c46a", "#6ac98a", "#6ac9c4", "#6a9be0", "#a06ae0", "#e06ab4"]
+# palette tuned so black bubble text clears WCAG AA
+COLORS = ["#f0907e", "#f0a95a", "#ecd45e", "#7fd093", "#6fcabf", "#84b3e6", "#b89ae4", "#f094c2"]
 
 cluster_names = {}
 for ci in range(N_CLUSTERS):
@@ -132,29 +132,29 @@ body {{ background: #0a0a0a; font-family: Georgia, serif; overflow: hidden; colo
   -webkit-overflow-scrolling: touch;
 }}
 #panel.open {{ transform: translate(-50%, 0); }}
+@media (prefers-reduced-motion: reduce) {{ #panel {{ transition: none; }} }}
 @media (max-width: 500px) {{
   #p-word {{ font-size: 20px !important; }}
   #panel {{ padding: 16px 18px 56px; }}
 }}
 .handle {{ width: 32px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.12); margin: 0 auto 20px; }}
-#p-word {{ font-size: 24px; font-weight: 700; color: #f0ece4; margin-bottom: 2px; }}
-#p-phonetic {{ font-size: 12px; color: rgba(255,255,255,0.25); margin-bottom: 14px; }}
-#p-defs {{ font-size: 14px; line-height: 1.75; color: #888; margin-bottom: 12px; }}
+#p-word {{ font-size: 24px; font-weight: 700; color: #f5f1ea; margin-bottom: 2px; }}
+#p-phonetic {{ font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 14px; }}
+#p-defs {{ font-size: 14px; line-height: 1.75; color: #cfcfcf; margin-bottom: 12px; }}
 #p-defs .def {{ margin-bottom: 6px; }}
-#p-examples {{ font-size: 13px; font-style: italic; color: rgba(255,255,255,0.28); margin-bottom: 16px; line-height: 1.6; }}
-.field-label {{ font-size: 11px; color: rgba(255,255,255,0.2); margin-bottom: 4px; font-style: italic; }}
-#p-synonyms {{ font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 14px; line-height: 1.6; }}
-#p-antonyms {{ font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 16px; line-height: 1.6; }}
-#p-etymology {{ font-size: 13px; font-style: italic; color: rgba(255,255,255,0.25); margin-bottom: 12px; line-height: 1.6; }}
+#p-examples {{ font-size: 13px; font-style: italic; color: rgba(255,255,255,0.55); margin-bottom: 16px; line-height: 1.6; }}
+.field-label {{ font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 4px; font-style: italic; }}
+#p-synonyms {{ font-size: 13px; color: rgba(255,255,255,0.72); margin-bottom: 14px; line-height: 1.6; }}
+#p-antonyms {{ font-size: 13px; color: rgba(255,255,255,0.72); margin-bottom: 16px; line-height: 1.6; }}
+#p-etymology {{ font-size: 13px; font-style: italic; color: rgba(255,255,255,0.5); margin-bottom: 12px; line-height: 1.6; }}
 #close {{ position: absolute; top: 14px; right: 18px; background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 16px; font-family: sans-serif; }}
 #theme-btn {{ position: absolute; top: 14px; right: 44px; background: none; border: none; color: rgba(255,255,255,0.25); cursor: pointer; width: 18px; height: 18px; padding: 0; display: flex; align-items: center; }}
-#panel.light #theme-btn {{ color: #999; }}
 
 #panel.light {{ background: #fefefe; border-color: rgba(0,0,0,0.1); }}
 #panel.light #p-word {{ color: #0a0a0a; }}
 #panel.light #p-phonetic {{ color: #666; }}
 #panel.light #p-defs {{ color: #222; }}
-#panel.light #p-examples {{ color: #555; border-left-color: rgba(0,0,0,0.12); }}
+#panel.light #p-examples {{ color: #555; }}
 #panel.light #p-synonyms, #panel.light #p-antonyms {{ color: #333; }}
 #panel.light #p-etymology {{ color: #555; }}
 #panel.light .field-label {{ color: #999; }}
@@ -211,11 +211,14 @@ const R = d => Math.max(28, _mc.measureText(d.word).width / 2 + 16);
 
 const nodes = DATA.map(d => {{
   const [x, y] = toScreen(d.x, d.y);
-  return {{ ...d, x, y, r: R(d), seed: (d.word.charCodeAt(0) / 90) * Math.PI * 2 }};
+  // home = the t-SNE position; bubbles are tethered here so they never drift off
+  return {{ ...d, x, y, hx: x, hy: y, r: R(d), seed: (d.word.charCodeAt(0) / 90) * Math.PI * 2 }};
 }});
 
 const sim = d3.forceSimulation(nodes)
   .force('collide', d3.forceCollide(d => d.r + 4).strength(0.85).iterations(3))
+  .force('x', d3.forceX(d => d.hx).strength(0.05))
+  .force('y', d3.forceY(d => d.hy).strength(0.05))
   .alphaDecay(0.014);
 
 const svg = d3.select('#svg');
@@ -229,8 +232,8 @@ function blobPath(cx, cy, r, t, seed) {{
   const pts = Array.from({{length: N}}, (_, i) => {{
     const a = (i / N) * Math.PI * 2;
     const w = 1
-      + 0.032 * Math.sin(2*a + t*0.38 + seed)
-      + 0.018 * Math.cos(3*a - t*0.27 + seed + 1.2);
+      + 0.018 * Math.sin(2*a + t*0.9 + seed)
+      + 0.010 * Math.cos(3*a - t*0.7 + seed + 1.2);
     return [cx + r*w*Math.cos(a), cy + r*w*Math.sin(a)];
   }});
   let d = `M ${{pts[0][0].toFixed(2)}},${{pts[0][1].toFixed(2)}}`;
@@ -246,23 +249,25 @@ function blobPath(cx, cy, r, t, seed) {{
 const blobs = blobG.selectAll('path').data(nodes).enter().append('path')
   .attr('class', 'blob')
   .attr('fill', d => d.color)
-  .attr('fill-opacity', 0.82)
+  .attr('fill-opacity', 0.94)
   .on('click', (e, d) => {{ e.stopPropagation(); showPanel(d); }});
 
 const labels = textG.selectAll('text').data(nodes).enter().append('text')
   .attr('class', 'lbl')
   .style('font-size', d => Math.max(8, Math.min(12, d.r * 0.36)) + 'px')
   .style('font-weight', '600')
-  .style('fill', 'rgba(0,0,0,0.65)')
+  .style('fill', '#000')
   .text(d => d.word);
 
-let t = 0;
-(function frame() {{
-  requestAnimationFrame(frame);
-  t += 0.008;
-  blobs.attr('d', d => blobPath(d.x, d.y, d.r, t, d.seed));
+// fixed organic shape per bubble (phase = its seed)
+function draw() {{
+  blobs.attr('d', d => blobPath(d.x, d.y, d.r, d.seed, d.seed));
   labels.attr('x', d => d.x).attr('y', d => d.y);
-}})();
+}}
+// settle collisions off-screen, then paint once (static)
+sim.stop();
+for (let i = 0; i < 300; i++) sim.tick();
+draw();
 
 svg.call(d3.zoom().scaleExtent([0.25, 5]).on('zoom', e => g.attr('transform', e.transform)));
 
@@ -286,6 +291,11 @@ function showPanel(d) {{
 const panel = document.getElementById('panel');
 panel.addEventListener('click', e => e.stopPropagation());
 document.getElementById('close').onclick = () => panel.classList.remove('open');
+document.getElementById('theme-btn').onclick = () => {{
+  const isLight = panel.classList.toggle('light');
+  document.getElementById('icon-moon').style.display = isLight ? 'none' : '';
+  document.getElementById('icon-sun').style.display = isLight ? '' : 'none';
+}};
 
 // swipe down to close
 let _ty0 = 0;
@@ -293,12 +303,6 @@ panel.addEventListener('touchstart', e => {{ _ty0 = e.touches[0].clientY; }}, {{
 panel.addEventListener('touchend', e => {{
   if (e.changedTouches[0].clientY - _ty0 > 60) panel.classList.remove('open');
 }}, {{passive: true}});
-document.getElementById('theme-btn').onclick = () => {{
-  const isLight = document.getElementById('panel').classList.toggle('light');
-  document.getElementById('icon-moon').style.display = isLight ? 'none' : '';
-  document.getElementById('icon-sun').style.display = isLight ? '' : 'none';
-}};
-
 const countEl = document.getElementById('count');
 document.getElementById('search').addEventListener('input', e => {{
   const q = e.target.value.toLowerCase();
