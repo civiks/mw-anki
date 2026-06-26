@@ -396,11 +396,13 @@ CARD_MODEL = genanki.Model(
         "qfmt": """
 <div style="font-family:Georgia,serif;font-size:2em;font-weight:700;margin-bottom:4px">{{Word}}</div>
 <div style="font-size:0.85em;color:#999;font-style:italic">{{Pronunciation}} &nbsp; {{PartOfSpeech}}</div>
+{{tts en_US:Word}}
 """,
         "afmt": """
 <div style="font-family:Georgia,'Times New Roman',serif;max-width:560px;margin:0 auto;padding:8px;text-align:left">
   <div style="font-size:2em;font-weight:700;margin-bottom:2px">{{Word}}</div>
   <div style="font-size:0.85em;color:#999;font-style:italic;margin-bottom:18px">{{Pronunciation}} &nbsp; {{PartOfSpeech}}</div>
+  {{tts en_US:Word}}
   <hr style="border:none;border-top:1px solid #e5e5e5;margin:0 0 16px">
   {{Definition}}
   {{Example}}
